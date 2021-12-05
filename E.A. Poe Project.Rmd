@@ -1,0 +1,203 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(dplyr)
+df<- Data
+```
+
+```{r}
+head(df)
+```
+
+```{r}
+df <- separate(df, normalized_date, into = c("norm_month", "norm_year"), sep = " (?=[^ ]+$)")
+```
+
+```{r}
+dim(df)
+```
+
+
+```{r}
+summary(df)
+```
+
+
+```{r}
+textDf <- df %>% 
+ unnest_tokens(word, text) %>% 
+  anti_join(stop_words)
+head(textDf)
+```
+
+
+```{r}
+sent_df <- textDf %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(wikipedia_title, sentiment, sort = TRUE) %>%
+  filter(wikipedia_title != "?") %>% 
+  ungroup()
+```
+
+```{r, fig.width=8}
+sent_df %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 10) %>% 
+  ungroup() %>%
+  mutate(wikipedia_title = reorder(wikipedia_title, n)) %>%
+  ggplot(aes(n, wikipedia_title, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(x = "Contribution to sentiment",
+       y = NULL)
+```
+
+
+
+```{r}
+bing_word_counts <- textDf %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+bing_word_counts
+```
+
+
+```{r}
+bing_word_counts %>%
+  group_by(sentiment) %>%
+  slice_max(n, n = 20) %>% 
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(x = "Contribution to sentiment",
+       y = NULL)
+```
+
+
+
+
+
+
+```{r}
+box <- df %>% 
+  filter(title == "THE MURDERS IN THE RUE MORGUE") %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words)
+```
+
+```{r}
+plot_sent2 <- box %>%
+  inner_join(get_sentiments("nrc")) %>%
+  group_by(sentiment, word) %>%
+  count(mycount = n())
+```
+
+```{r, fig.width=8}
+ggplot(plot_sent2)+
+  geom_bar(aes(x = sentiment, fill = sentiment))
+```
+
+
+```{r}
+adv_fic <- df %>% 
+  filter(classification == "Adventure,Science_fiction") %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words)
+```
+
+
+```{r}
+plot_sent <- adv_fic %>%
+  inner_join(get_sentiments("nrc")) %>%
+  group_by(sentiment, word) %>%
+  count(mycount = n())
+```
+
+```{r}
+Pest <- df %>% 
+  filter(title == "KING PEST") %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words)
+```
+
+```{r}
+plot_sent3 <- Pest %>%
+  inner_join(get_sentiments("nrc")) %>%
+  group_by(sentiment, word) %>%
+  count(mycount = n())
+```
+
+
+```{r}
+ggplot(data = plot_sent, aes(label = word)) +
+  ggrepel::geom_label_repel(
+    aes(x = word, y = rnorm(nrow(plot_sent)),
+        label = word),
+    direction = "both", 
+    box.padding = 0.04,
+    segment.color = "transparent", 
+    size = 3) +
+  facet_wrap(~sentiment, ncol = 2)+
+  labs(x = "", y = "") +
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        panel.background = element_blank())
+```
+
+```{r}
+ggplot(data = plot_sent2, aes(label = word)) +
+  ggrepel::geom_label_repel(
+    aes(x = word, y = rnorm(nrow(plot_sent2)),
+        label = word),
+    direction = "both", 
+    box.padding = 0.04,
+    segment.color = "transparent", 
+    size = 3,
+    max.overlaps = 50) +
+  facet_wrap(~sentiment, ncol = 2)+
+  labs(x = "", y = "") +
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        panel.background = element_blank())
+```
+
+```{r}
+ggplot(data = plot_sent3, aes(label = word)) +
+  ggrepel::geom_label_repel(
+    aes(x = word, y = rnorm(nrow(plot_sent3)),
+        label = word),
+    direction = "both", 
+    box.padding = 0.04,
+    segment.color = "transparent", 
+    size = 3) +
+  facet_wrap(~sentiment, ncol = 2)+
+  labs(x = "", y = "") +
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        panel.background = element_blank())
+```
+
+
+
+
+
+
+
